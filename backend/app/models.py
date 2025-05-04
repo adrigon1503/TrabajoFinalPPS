@@ -1,14 +1,13 @@
-# backend/app/models.py
 from sqlalchemy import Column, Integer, String, DateTime
 from .database import Base
 import datetime
 
-class Match(Base):
-    __tablename__ = "matches"
+class Partido(Base):
+    __tablename__ = "partidos"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_home = Column(String, nullable=False)
-    team_away = Column(String, nullable=False)
-    score_home = Column(Integer, default=0)
-    score_away = Column(Integer, default=0)
+    equipo_local = Column(String, nullable=False)
+    equipo_visitante = Column(String, nullable=False)
+    goles_local = Column(Integer, default=0)
+    goles_visitante = Column(Integer, default=0)
     date = Column(DateTime, default=datetime.datetime.utcnow)

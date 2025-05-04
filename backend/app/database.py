@@ -1,4 +1,3 @@
-# backend/app/database.py
 import time
 import os
 from sqlalchemy import create_engine
