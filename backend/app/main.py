@@ -5,7 +5,14 @@ from .database import engine, SessionLocal
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="API Waterpolo",
+    description="Registro de partidos",
+    version="1.0.0",
+    docs_url="/docs",            # Swagger UI
+    redoc_url="/redoc",          # Documentación alternativa (opcional)
+    openapi_url="/openapi.json"  # JSON del schema OpenAPI
+)
 
 # Obtener conexión a la DB
 def get_db():
@@ -17,7 +24,7 @@ def get_db():
 
 @app.get("/")
 def read_root():
-    return {"message": "Bienvenido a la API de Waterpolo"}
+    return {"message": "Bienvenido a la API de Waterpolo Match Registration creada por AAR"}
 
 # Endpoint para listar partidos
 @app.get("/partidos/", response_model=list[schemas.PartidoOut])
