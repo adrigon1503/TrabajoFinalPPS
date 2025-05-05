@@ -1,7 +1,14 @@
 fastapi
 uvicorn
+gunicorn
 sqlalchemy
 psycopg2-binary
 python-dotenv
-gunicorn
 tenacity
+python-jose[cryptography]
+pyotp
+qrcode
+pillow
+passlib[bcrypt]
+pydantic[email]
+python-multipart
