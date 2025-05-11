@@ -1,8 +1,15 @@
+import sys
+import os
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app  
-from app.database import SessionLocal
-from app import crud, schemas
+
+# Agregar el directorio raíz del proyecto al PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+
+# Importar la aplicación desde backend
+from backend.app.main import app  
+from backend.app.database import SessionLocal
+from backend.app import crud, schemas
 import json
 
 # Crear un cliente de pruebas para FastAPI
