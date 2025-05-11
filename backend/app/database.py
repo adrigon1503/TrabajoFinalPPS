@@ -8,10 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_USER = "admin"
+DB_USER = os.getenv("POSTGRES_PASSWORD")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = "db"
-DB_NAME = "waterpolo"
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("POSTGRES_DB")
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
