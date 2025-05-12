@@ -27,8 +27,10 @@ jobs:
 
       - name: Start PostgreSQL container
         run: |
+          docker network create my_network || true
           docker run -d \
             --name postgres \
+            --network my_network \
             -e POSTGRES_DB=$DB_NAME \
             -e POSTGRES_USER=$DB_USER \
             -e POSTGRES_PASSWORD=$DB_PASSWORD \
@@ -49,10 +51,11 @@ jobs:
       - name: Run backend tests
         run: |
           docker run --rm \
-            --link postgres \
+            --network my_network \
             -e DB_NAME=$DB_NAME \
             -e DB_USER=$DB_USER \
             -e DB_PASSWORD=$DB_PASSWORD \
             -e PYTHONPATH=/app \
             ${{ steps.prep.outputs.tag }} \
             pytest /app/tests/test_app.py --maxfail=5 --disable-warnings
+
