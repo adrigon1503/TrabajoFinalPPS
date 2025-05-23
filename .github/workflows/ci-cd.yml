@@ -48,8 +48,11 @@ jobs:
       - name: Show backend test output
         run: docker compose logs backend
 
-      - name: Run pip-audit
-        run: docker compose exec -T backend pip-audit
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit on backend requirements
+        run: pip-audit -r backend/requirements.txt
 
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
