@@ -5,6 +5,9 @@ server:
   grpc_listen_port: 9095
 
 ingester:
+  wal:
+    enabled: true
+    dir: /tmp/loki-data/wal
   lifecycler:
     ring:
       kvstore:
@@ -12,6 +15,7 @@ ingester:
       replication_factor: 1
   chunk_idle_period: 5m
   max_chunk_age: 1h
+
 
 schema_config:
   configs:
