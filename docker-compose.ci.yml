@@ -1,0 +1,9 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.test
+    env_file:
+      - .env
+    depends_on:
+      - db
