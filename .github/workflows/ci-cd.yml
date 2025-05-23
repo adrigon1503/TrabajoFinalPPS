@@ -48,7 +48,10 @@ jobs:
         run: bandit -r backend -ll
 
       - name: Run backend tests
-        run: docker compose exec -T backend pytest --maxfail=5 --disable-warnings
+        run: |
+              docker build -f backend/Dockerfile.test -t backend-test .
+              docker run --rm backend-test
+
 
       - name: Security audit
         run: docker compose exec -T backend pip-audit

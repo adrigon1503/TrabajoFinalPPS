@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copiamos dependencias
+COPY backend/requirements.txt .
+
+# Instalamos dependencias
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir pytest
+
+# Copiamos el código fuente y los tests
+COPY backend /app/backend
+COPY tests /app/tests
+
+# Añadimos PYTHONPATH para que tests/ pueda importar backend
+ENV PYTHONPATH=/app
+
+# Comando por defecto para ejecutar los tests
+CMD ["pytest", "--maxfail=5", "--disable-warnings"]
