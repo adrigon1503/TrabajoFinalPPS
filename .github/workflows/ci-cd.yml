@@ -53,4 +53,4 @@ jobs:
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: backend
+          image-ref: backend:ci

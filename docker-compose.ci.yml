@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile.test
+    image: backend:ci 
     env_file:
       - .env
     depends_on:
