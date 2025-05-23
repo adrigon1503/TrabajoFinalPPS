@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
+      POSTGRES_DB: waterpolo
+      POSTGRES_USER: admin
       POSTGRES_PASSWORD: mypass
+      DB_HOST: localhost  
 
     steps:
       - name: Checkout code
@@ -21,42 +22,36 @@ jobs:
 
       - name: Create .env file for CI
         run: |
-          echo "POSTGRES_DB=$POSTGRES_DB" > .env
-          echo "POSTGRES_USER=$POSTGRES_USER" >> .env
-          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
+          echo "POSTGRES_DB=${POSTGRES_DB}" > .env
+          echo "POSTGRES_USER=${POSTGRES_USER}" >> .env
+          echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> .env
+          echo "DB_HOST=${DB_HOST}" >> .env
 
-      - name: Launch containers
+      - name: Start containers
         run: docker compose -f docker-compose.yml up -d --build
 
-      - name: Wait for backend
+      - name: Wait for PostgreSQL
         run: |
-          echo "Esperando a backend en http://localhost..."
           for i in {1..10}; do
-            if curl -s http://localhost:8000 | grep "Welcome"; then
-              echo "Backend listo."
-              break
-            else
-              echo "Esperando..."
-              sleep 5
-            fi
+            docker compose exec -T db pg_isready && echo "Postgres is ready." && break
+            echo "Waiting for postgres..."
+            sleep 3
           done
 
-      - name: Install Bandit
+      - name: Install dependencies for host
         run: pip install bandit
 
-      - name: Static code analysis (SAST) with Bandit
+      - name: Run static analysis (Bandit)
         run: bandit -r backend -ll
 
       - name: Run backend tests
         run: |
-              docker build -f backend/Dockerfile.test -t backend-test .
-              docker run --rm backend-test
+          docker compose exec -T backend pytest --maxfail=5 --disable-warnings
 
-
-      - name: Security audit
+      - name: Run pip-audit
         run: docker compose exec -T backend pip-audit
 
-      - name: Scan Docker image
+      - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: backend
