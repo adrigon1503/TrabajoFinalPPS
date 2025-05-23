@@ -12,6 +12,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     restart: always
+    networks:
+      - loki_net
 
   backend:
     build:
@@ -24,6 +26,8 @@ services:
     depends_on:
       - db
     restart: always
+    networks:
+      - loki_net
 
   nginx:
     image: nginx:alpine
@@ -37,6 +41,8 @@ services:
       - backend
       - loki
     restart: always
+    networks:
+      - loki_net
 
   prometheus:
     image: prom/prometheus
@@ -44,6 +50,8 @@ services:
       - ./logs/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      - loki_net
 
   grafana:
     image: grafana/grafana
@@ -51,6 +59,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+    networks:
+      - loki_net
 
   loki:
     image: grafana/loki:2.9.2
@@ -60,8 +70,8 @@ services:
     volumes:
       - ${PWD}/logs/loki-config.yml:/etc/loki/local-config.yml
       - ${PWD}/logs/loki-data:/tmp/loki
-
-
+    networks:
+      - loki_net
 
   promtail:
     image: grafana/promtail:2.9.2
@@ -72,8 +82,14 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+    networks:
+      - loki_net
 
 volumes:
   db_data:
   certs:
   grafana_data:
+
+networks:
+  loki_net:
+    driver: bridge
