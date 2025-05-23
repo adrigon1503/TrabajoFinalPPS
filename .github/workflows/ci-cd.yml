@@ -14,7 +14,11 @@ jobs:
       POSTGRES_DB: mydb
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypass
-      
+
+    defaults:
+      run:
+        working-directory: TrabajoFinalPPS
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,7 +30,7 @@ jobs:
         run: |
           echo "Esperando a backend en http://localhost..."
           for i in {1..10}; do
-            if curl -s http://localhost | grep "Welcome"; then
+            if curl -s http://localhost:8000 | grep "Welcome"; then
               echo "Backend listo."
               break
             else
@@ -35,11 +39,16 @@ jobs:
             fi
           done
 
+      - name: Static code analysis (SAST) with Bandit
+        run: |
+          pip install bandit
+          bandit -r backend -ll
+
       - name: Run backend tests
-        run: docker-compose exec -T backend pytest --maxfail=5 --disable-warnings
+        run: docker compose exec -T backend pytest --maxfail=5 --disable-warnings
 
       - name: Security audit
-        run: docker-compose exec -T backend pip-audit
+        run: docker compose exec -T backend pip-audit
 
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
