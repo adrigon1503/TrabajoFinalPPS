@@ -68,8 +68,8 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yml
     volumes:
-      - ${PWD}/logs/loki-config.yml:/etc/loki/local-config.yml
-      - ${PWD}/logs/loki-data:/tmp/loki-data
+      - ./logs/loki-config.yml:/etc/loki/local-config.yml
+      - ./logs/loki-data:/tmp/loki-data
 
     networks:
       - loki_net
