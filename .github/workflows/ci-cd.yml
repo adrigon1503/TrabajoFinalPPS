@@ -28,7 +28,8 @@ jobs:
           echo "DB_HOST=${DB_HOST}" >> .env
 
       - name: Start containers (CI version)
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build db backend
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
+
 
       - name: Wait for PostgreSQL
         run: |
