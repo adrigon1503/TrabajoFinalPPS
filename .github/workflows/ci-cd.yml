@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Launch containers
-        run: docker compose -f TrabajoFinalPPS/docker-compose.yml up -d --build
+        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Wait for backend
         run: |
@@ -39,13 +39,13 @@ jobs:
         run: pip install bandit
 
       - name: Static code analysis (SAST) with Bandit
-        run: bandit -r TrabajoFinalPPS/backend -ll
+        run: bandit -r backend -ll
 
       - name: Run backend tests
-        run: docker compose -f TrabajoFinalPPS/docker-compose.yml exec -T backend pytest --maxfail=5 --disable-warnings
+        run: docker compose exec -T backend pytest --maxfail=5 --disable-warnings
 
       - name: Security audit
-        run: docker compose -f TrabajoFinalPPS/docker-compose.yml exec -T backend pip-audit
+        run: docker compose exec -T backend pip-audit
 
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
