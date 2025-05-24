@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import jwt
 
-from backend import crud, schemas
-from ..database import get_db
+from backend.app import crud
+from backend.app.database import get_db  
 import os
 
 router = APIRouter()
