@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Create .env file for CI
         run: |
@@ -46,41 +46,40 @@ jobs:
       - name: Show backend logs
         run: docker compose logs backend
 
-      # ✅ Bandit (seguridad en código)
-      - name: Run Bandit
+      - name: Run Bandit (security linter)
         run: |
           pip install bandit
-          bandit -r backend -ll -o bandit_report.txt
+          bandit -r backend -ll -o bandit_report.txt -f txt
 
-      - name: Upload Bandit Report
-        uses: actions/upload-artifact@v3
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v2
         with:
           name: bandit-report
           path: bandit_report.txt
 
-      #pip-audit (vulnerabilidades en dependencias)
-      - name: Run pip-audit
+      - name: Run pip-audit (dependency scan)
         run: |
           pip install pip-audit
           pip-audit -r backend/requirements.txt > pip_audit_report.txt
 
-      - name: Upload pip-audit Report
-        uses: actions/upload-artifact@v3
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v2
         with:
           name: pip-audit-report
           path: pip_audit_report.txt
 
-      #Pruebas unitarias
       - name: Run unit tests
         run: docker compose -f docker-compose.ci.yml run --rm backend pytest
 
-      #Trivy (vulnerabilidades en la imagen Docker)
-      - name: Run Trivy
-        run: |
-          docker run --rm -v $(pwd):/root/.cache/ aquasec/trivy image backend:ci --format table --output trivy_report.txt
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: backend:ci
+          format: table
+          output: trivy_report.txt
 
-      - name: Upload Trivy Report
-        uses: actions/upload-artifact@v3
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v2
         with:
           name: trivy-report
           path: trivy_report.txt
