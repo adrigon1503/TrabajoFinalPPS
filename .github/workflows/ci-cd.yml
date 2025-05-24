@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     env:
@@ -15,6 +15,8 @@ jobs:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: mypass
       DB_HOST: db
+      SECRET_KEY: supersecret
+      LOG_LEVEL: DEBUG
 
     steps:
       - name: Checkout code
@@ -26,35 +28,47 @@ jobs:
           echo "POSTGRES_USER=${POSTGRES_USER}" >> .env
           echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> .env
           echo "DB_HOST=${DB_HOST}" >> .env
+          echo "SECRET_KEY=${SECRET_KEY}" >> .env
+          echo "LOG_LEVEL=${LOG_LEVEL}" >> .env
 
-      - name: Start containers (CI version)
+      - name: Build and start services
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
 
-
-      - name: Wait for PostgreSQL
+      - name: Wait for PostgreSQL to be ready
         run: |
           for i in {1..10}; do
-            docker compose exec -T db pg_isready && echo "Postgres is ready." && break
+            docker compose exec -T db pg_isready -U ${POSTGRES_USER} && break
             echo "Waiting for postgres..."
             sleep 3
           done
 
-      - name: Install Bandit
-        run: pip install bandit
+      - name: Run Bandit (security linter)
+        run: |
+          pip install bandit
+          bandit -r backend -ll
 
-      - name: Static analysis (Bandit)
-        run: bandit -r backend -ll
+      - name: Run pip-audit for dependency vulnerabilities
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.txt
 
-      - name: Show backend test output
+      - name: Run unit tests (pytest)
+        run: |
+          docker compose exec -T backend pytest
+
+      - name: Check if Prometheus is reachable
+        run: curl --fail http://localhost:9090/-/ready
+
+      - name: Check if Grafana is reachable
+        run: curl --fail http://localhost:3000/api/health
+
+      - name: Check if Kibana is reachable
+        run: curl --fail http://localhost:5601/api/status
+
+      - name: Show backend logs
         run: docker compose logs backend
 
-      - name: Install pip-audit
-        run: pip install pip-audit
-
-      - name: Run pip-audit on backend requirements
-        run: pip-audit -r backend/requirements.txt
-
-      - name: Scan Docker image
+      - name: Scan Docker image (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: backend:ci
