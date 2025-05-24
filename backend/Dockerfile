@@ -10,8 +10,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend /app/backend
 COPY tests /app/tests
 
+# Copiar el archivo de variables de entorno
+COPY .env .env
+
 # Añadir PYTHONPATH para que funcione el import desde tests/
 ENV PYTHONPATH=/app
 
-# Comando por defecto para producción (puedes cambiar esto en desarrollo o tests)
+# Comando por defecto para producción
 CMD ["gunicorn", "backend.app.main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
