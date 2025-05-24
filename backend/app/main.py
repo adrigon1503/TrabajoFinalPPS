@@ -11,6 +11,13 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas, crud
 from .database import engine, SessionLocal
+from app.logger import get_logger
+
+logger = get_logger()
+
+logger.info("Backend iniciado")
+logger.warning("Advertencia de ejemplo")
+logger.error("Error de ejemplo")
 
 # Cargar variables de entorno
 load_dotenv(".env")

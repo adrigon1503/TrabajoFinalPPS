@@ -1,20 +1,29 @@
 import logging
 import os
 
-def setup_logger():
-    logger = logging.getLogger("backend_logger")
-    logger.setLevel(logging.DEBUG)
+# Aseguramos que la carpeta de logs exista
+os.makedirs("logs", exist_ok=True)
 
-    log_dir = "/var/log/backend"
-    os.makedirs(log_dir, exist_ok=True)
+# Configuración de logger
+logger = logging.getLogger("backend_logger")
+logger.setLevel(logging.DEBUG)  # Captura todos los niveles
 
-    file_handler = logging.FileHandler(f"{log_dir}/app.log")
-    file_handler.setLevel(logging.DEBUG)
+# Formato común
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
+# Handler para archivo
+file_handler = logging.FileHandler("logs/backend.log")
+file_handler.setFormatter(formatter)
 
-    if not logger.hasHandlers():
-        logger.addHandler(file_handler)
+# Handler para consola (opcional)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
 
+# Evitar múltiples handlers duplicados
+if not logger.hasHandlers():
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+# Exportar logger
+def get_logger():
     return logger
