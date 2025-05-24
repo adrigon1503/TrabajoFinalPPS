@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -32,22 +32,8 @@ jobs:
           echo "LOG_LEVEL=${LOG_LEVEL}" >> .env
           echo "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:5432/${POSTGRES_DB}" >> .env
 
-      - name: Generar certificados SSL autofirmados
-        run: |
-          mkdir -p nginx/certs
-          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout nginx/certs/selfsigned.key \
-            -out nginx/certs/selfsigned.crt \
-            -subj "/CN=localhost"
-
-      - name: Copiar nginx.conf para CI
-        run: cp nginx/nginx.conf nginx/nginx.ci.conf && echo "resolver 127.0.0.11;" | cat - nginx/nginx.ci.conf > temp && mv temp nginx/nginx.ci.conf
-
-      - name: Build and start services
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
-
-      - name: Show backend logs (diagnóstico inicial)
-        run: docker compose logs backend
+      - name: Build and start backend and DB
+        run: docker compose -f docker-compose.ci.yml up -d --build
 
       - name: Wait for PostgreSQL to be ready
         run: |
@@ -57,37 +43,23 @@ jobs:
             sleep 3
           done
 
+      - name: Show backend logs
+        run: docker compose logs backend
+
       - name: Run Bandit (security linter)
         run: |
           pip install bandit
           bandit -r backend -ll
 
-      - name: Run pip-audit for dependency vulnerabilities
+      - name: Run pip-audit (dependency scan)
         run: |
           pip install pip-audit
           pip-audit -r backend/requirements.txt
 
-      - name: Run unit tests (pytest via `run`)
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend pytest
+      - name: Run unit tests
+        run: docker compose -f docker-compose.ci.yml run --rm backend pytest
 
-      - name: Check if Prometheus is reachable
-        run: curl --fail http://localhost:9090/-/ready
-
-      - name: Check if Grafana is reachable
-        run: curl --fail http://localhost:3000/api/health
-
-      - name: Check if Kibana is reachable via Nginx
-        run: |
-          for i in {1..10}; do
-            curl --insecure --fail https://localhost/kibana/api/status && break
-            echo "Esperando que Kibana esté disponible vía Nginx..."
-            sleep 5
-          done
-
-      - name: Show backend logs (final)
-        run: docker compose logs backend
-
-      - name: Scan Docker image (Trivy)
+      - name: Scan backend image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: backend:ci
