@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import jwt
 
-from .. import crud, schemas
+from backend import crud, schemas
 from ..database import get_db
 import os
 
