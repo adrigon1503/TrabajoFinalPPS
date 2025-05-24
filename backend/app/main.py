@@ -13,11 +13,10 @@ from . import models, schemas, crud
 from .database import engine, SessionLocal
 from backend.app.logger import get_logger
 from backend.auth.routers import router as auth_router
-from fastapi import FastAPI
 
+# Crear app FastAPI
 app = FastAPI()
 app.include_router(auth_router, prefix="/auth")
-
 
 logger = get_logger()
 
@@ -35,9 +34,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Crear tablas si no existen
 models.Base.metadata.create_all(bind=engine)
-
-# Crear app FastAPI
-app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
