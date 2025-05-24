@@ -49,24 +49,12 @@ jobs:
       - name: Run Bandit (security linter)
         run: |
           pip install bandit
-          bandit -r backend -ll -o bandit_report.txt -f txt
-
-      - name: Upload Bandit report
-        uses: actions/upload-artifact@v2
-        with:
-          name: bandit-report
-          path: bandit_report.txt
+          bandit -r backend -ll
 
       - name: Run pip-audit (dependency scan)
         run: |
           pip install pip-audit
-          pip-audit -r backend/requirements.txt > pip_audit_report.txt
-
-      - name: Upload pip-audit report
-        uses: actions/upload-artifact@v2
-        with:
-          name: pip-audit-report
-          path: pip_audit_report.txt
+          pip-audit -r backend/requirements.txt
 
       - name: Run unit tests
         run: docker compose -f docker-compose.ci.yml run --rm backend pytest
@@ -75,11 +63,3 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: backend:ci
-          format: table
-          output: trivy_report.txt
-
-      - name: Upload Trivy report
-        uses: actions/upload-artifact@v2
-        with:
-          name: trivy-report
-          path: trivy_report.txt
