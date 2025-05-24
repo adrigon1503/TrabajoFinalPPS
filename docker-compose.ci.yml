@@ -41,7 +41,7 @@ services:
     image: docker.elastic.co/logstash/logstash:8.11.1
     volumes:
       - ./logs/backend.log:/usr/share/logstash/logs/backend.log
-      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
     depends_on:
       - elasticsearch
 
@@ -53,21 +53,6 @@ services:
       ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
     depends_on:
       - elasticsearch
-
-  loki:
-    image: grafana/loki:2.9.2
-    command: -config.file=/etc/loki/local-config.yaml
-    ports:
-      - "3100:3100"
-
-  promtail:
-    image: grafana/promtail:2.9.2
-    volumes:
-      - ./logs:/var/log
-      - ./logs/promtail-config.yaml:/etc/promtail/config.yaml
-    command: -config.file=/etc/promtail/config.yaml
-    depends_on:
-      - loki
 
   prometheus:
     image: prom/prometheus
@@ -84,7 +69,6 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
-      - loki
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
