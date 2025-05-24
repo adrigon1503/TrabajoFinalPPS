@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from jose import jwt
 
 from backend.app import crud
-from backend.app.database import get_db  
+from backend.app.database import get_db
+from backend.app import schemas
 import os
 
 router = APIRouter()
