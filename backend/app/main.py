@@ -12,6 +12,10 @@ from sqlalchemy.orm import Session
 from . import models, schemas, crud
 from .database import engine, SessionLocal
 from backend.app.logger import get_logger
+from .auth import router as auth_router
+
+app.include_router(auth_router, prefix="/auth")
+
 
 logger = get_logger()
 
