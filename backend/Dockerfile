@@ -1,17 +1,15 @@
 FROM python:3.11-slim
 
+# Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instalar dependencias
-COPY backend/requirements.txt ./
+# Copiar e instalar dependencias
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar correctamente la carpeta backend y tests al contenedor
+# Copiar el código de la aplicación y los tests
 COPY backend /app/backend
 COPY tests /app/tests
-
-# Copiar el archivo de variables de entorno
-COPY .env .env
 
 # Añadir PYTHONPATH para que funcione el import desde tests/
 ENV PYTHONPATH=/app
