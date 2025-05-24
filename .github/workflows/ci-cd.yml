@@ -31,10 +31,10 @@ jobs:
           echo "SECRET_KEY=${SECRET_KEY}" >> .env
           echo "LOG_LEVEL=${LOG_LEVEL}" >> .env
 
-      - name: Generar certificados SSL para Nginx
+      - name: Generar certificados SSL autofirmados
         run: |
           mkdir -p certs
-          openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout certs/selfsigned.key \
             -out certs/selfsigned.crt \
             -subj "/CN=localhost"
@@ -66,29 +66,19 @@ jobs:
       - name: Run unit tests (pytest via `run`)
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend pytest
 
-      - name: Verificar contenedores en ejecución
-        run: docker compose ps
-
-      - name: Mostrar logs de Nginx
-        run: docker compose logs nginx
-
       - name: Check if Prometheus is reachable
         run: curl --fail http://localhost:9090/-/ready
 
       - name: Check if Grafana is reachable
         run: curl --fail http://localhost:3000/api/health
 
-      - name: Mostrar logs de Kibana
-        run: docker compose logs kibana
-
-      - name: Esperar que Kibana esté disponible a través de Nginx
+      - name: Check if Kibana is reachable via Nginx
         run: |
           for i in {1..10}; do
             curl --insecure --fail https://localhost/kibana/api/status && break
             echo "Esperando que Kibana esté disponible vía Nginx..."
             sleep 5
           done
-
 
       - name: Show backend logs (final)
         run: docker compose logs backend
