@@ -64,8 +64,9 @@ jobs:
       - name: Check if Grafana is reachable
         run: curl --fail http://localhost:3000/api/health
 
-      - name: Check if Kibana is reachable
-        run: curl --fail http://localhost:5601/api/status
+      - name: Check if Kibana is reachable via Nginx
+        run: curl --insecure --fail https://localhost/kibana/api/status
+
 
       - name: Show backend logs (final)
         run: docker compose logs backend
