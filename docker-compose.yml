@@ -3,94 +3,79 @@ version: "3.9"
 services:
   db:
     image: postgres:16
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: waterpolo
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: mypass
     volumes:
       - db_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    restart: always
-    networks:
-      - loki_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      retries: 5
 
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: backend/Dockerfile.test
+    image: backend:ci
     env_file:
       - .env
+    depends_on:
+      db:
+        condition: service_healthy
     expose:
       - "8000"
-    depends_on:
-      - db
-    restart: always
-    networks:
-      - loki_net
-
-  nginx:
-    image: nginx:alpine
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/certs:/etc/nginx/certs
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - backend
-      - loki
-    restart: always
-    networks:
-      - loki_net
+    logging:
+      driver: "local"
 
   prometheus:
     image: prom/prometheus
     volumes:
       - ./logs/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
       - "9090:9090"
-    networks:
-      - loki_net
 
   grafana:
     image: grafana/grafana
     ports:
       - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - loki_net
-
-  loki:
-    image: grafana/loki:2.9.2
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yml
-    volumes:
-      - ./logs/loki-config.yml:/etc/loki/local-config.yml
-      - ./logs/loki-data:/tmp/loki-data
-
-    networks:
-      - loki_net
-
-  promtail:
-    image: grafana/promtail:2.9.2
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/log:/var/log
-      - ./logs/promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
     depends_on:
-      - loki
-    networks:
-      - loki_net
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    volumes:
+      - ./logs/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
 
 volumes:
   db_data:
-  certs:
-  grafana_data:
-
-networks:
-  loki_net:
-    driver: bridge
+  esdata:
