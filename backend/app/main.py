@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas, crud
 from .database import engine, SessionLocal
-from app.logger import get_logger
+from backend.app.logger import get_logger
 
 logger = get_logger()
 
