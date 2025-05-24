@@ -1,29 +1,34 @@
-import logging
 import os
+import logging
 
-# Aseguramos que la carpeta de logs exista
-os.makedirs("logs", exist_ok=True)
+# Definir la ruta del archivo de log
+LOG_DIR = "logs"
+LOG_FILE = "backend.log"
+LOG_PATH = os.path.join(LOG_DIR, LOG_FILE)
 
-# Configuración de logger
-logger = logging.getLogger("backend_logger")
-logger.setLevel(logging.DEBUG)  # Captura todos los niveles
+# Crear el directorio de logs si no existe
+os.makedirs(LOG_DIR, exist_ok=True)
 
-# Formato común
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# Si existe un directorio en lugar de archivo, eliminarlo
+if os.path.isdir(LOG_PATH):
+    os.rmdir(LOG_PATH)
 
-# Handler para archivo
-file_handler = logging.FileHandler("logs/backend.log")
+# Crear un archivo de log vacío si no existe
+if not os.path.exists(LOG_PATH):
+    with open(LOG_PATH, 'w'):
+        pass
+
+# Configuración del logger
+logger = logging.getLogger("backend")
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(LOG_PATH)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 
-# Handler para consola (opcional)
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-
-# Evitar múltiples handlers duplicados
-if not logger.hasHandlers():
+# Evitar agregar múltiples handlers en recargas (útil para entornos interactivos o tests)
+if not logger.handlers:
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
 
-# Exportar logger
 def get_logger():
     return logger
