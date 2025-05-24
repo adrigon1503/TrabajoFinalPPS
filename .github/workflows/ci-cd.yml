@@ -33,12 +33,12 @@ jobs:
 
       - name: Generar certificados SSL autofirmados
         run: |
-          mkdir -p certs
+          mkdir -p nginx/certs
           openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout certs/selfsigned.key \
-            -out certs/selfsigned.crt \
+            -keyout nginx/certs/selfsigned.key \
+            -out nginx/certs/selfsigned.crt \
             -subj "/CN=localhost"
-
+            
       - name: Build and start services
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
 
