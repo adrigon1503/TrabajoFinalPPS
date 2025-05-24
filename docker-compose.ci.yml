@@ -1,5 +1,3 @@
-
-
 services:
   db:
     image: postgres:16
@@ -53,6 +51,11 @@ services:
       ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
     depends_on:
       - elasticsearch
+    healthcheck:
+      test: curl -f http://localhost:5601/api/status || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   prometheus:
     image: prom/prometheus
@@ -82,10 +85,14 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - backend
-      - grafana
-      - prometheus
-      - kibana
+      kibana:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      grafana:
+        condition: service_started
+      prometheus:
+        condition: service_started
 
 volumes:
   db_data:
