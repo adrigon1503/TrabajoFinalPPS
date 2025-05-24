@@ -34,6 +34,9 @@ jobs:
       - name: Build and start services
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
 
+      - name: Show backend logs (diagnóstico inicial)
+        run: docker compose logs backend
+
       - name: Wait for PostgreSQL to be ready
         run: |
           for i in {1..10}; do
@@ -52,9 +55,8 @@ jobs:
           pip install pip-audit
           pip-audit -r backend/requirements.txt
 
-      - name: Run unit tests (pytest)
-        run: |
-          docker compose exec -T backend pytest
+      - name: Run unit tests (pytest via `run`)
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm backend pytest
 
       - name: Check if Prometheus is reachable
         run: curl --fail http://localhost:9090/-/ready
@@ -65,7 +67,7 @@ jobs:
       - name: Check if Kibana is reachable
         run: curl --fail http://localhost:5601/api/status
 
-      - name: Show backend logs
+      - name: Show backend logs (final)
         run: docker compose logs backend
 
       - name: Scan Docker image (Trivy)

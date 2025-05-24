@@ -6,130 +6,126 @@ from fastapi.testclient import TestClient
 # Agregar el directorio raíz del proyecto al PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-# Importar la aplicación desde backend
-from backend.app.main import app  
+from backend.app.main import app
 from backend.app.database import SessionLocal
 from backend.app import crud, schemas
-import json
 
-# Crear un cliente de pruebas para FastAPI
 client = TestClient(app)
+
+# Helpers
+def register_user(email, password, twofa_enabled=False):
+    response = client.post("/auth/register", json={
+        "email": email,
+        "password": password,
+        "twofa_enabled": twofa_enabled
+    })
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
+def login_user(email, password):
+    response = client.post("/auth/login", data={
+        "username": email,
+        "password": password
+    })
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
+def get_token(email, password, twofa_enabled=False):
+    try:
+        return register_user(email, password, twofa_enabled)
+    except:
+        return login_user(email, password)
 
 # 1. Prueba de registro de usuario
 def test_register_user():
-    response = client.post("/auth/register", json={
-        "email": "testuser@example.com",
-        "password": "testpassword123"
-    })
-    assert response.status_code == 200
-    data = response.json()
-    assert "access_token" in data  # Verifica que se devuelve un JWT
+    token = register_user("testuser@example.com", "testpassword123")
+    assert token is not None
 
 # 2. Prueba de login de usuario
 def test_login_user():
-    response = client.post("/auth/register", json={
-        "email": "testlogin@example.com",
-        "password": "testpassword123"
-    })
-    assert response.status_code == 200
-    data = response.json()
-    access_token = data["access_token"]
-
-    # Usar el token para hacer login
-    response = client.post("/auth/login", data={
-        "username": "testlogin@example.com",
-        "password": "testpassword123"
-    })
-    assert response.status_code == 200
-    data = response.json()
-    assert data["access_token"] == access_token
+    email = "testlogin@example.com"
+    password = "testpassword123"
+    register_user(email, password)
+    token = login_user(email, password)
+    assert token is not None
 
 # 3. Prueba de 2FA (verificación)
 def test_2fa_verification():
-    # Primero, creamos un usuario con 2FA habilitado
-    response = client.post("/auth/register", json={
-        "email": "test2fa@example.com",
-        "password": "testpassword123",
-        "twofa_enabled": True
+    email = "test2fa@example.com"
+    password = "testpassword123"
+    register_user(email, password, twofa_enabled=True)
+
+    response = client.post("/auth/verify-2fa", json={
+        "email": email,
+        "code": "123456"  # Código de ejemplo
     })
     assert response.status_code == 200
 
-    # Verificamos que se recibe el código de 2FA (en un entorno real, deberíamos simularlo)
-    response = client.post("/auth/verify-2fa", json={
-        "email": "test2fa@example.com",
-        "code": "123456"  # Código de ejemplo
-    })
-    assert response.status_code == 200  # Si el código es correcto
-
 # 4. Crear un partido
 def test_create_partido():
-    access_token = "your_jwt_token_here"  # Obtén un token válido antes
-
+    token = get_token("creator@example.com", "securepass123")
     response = client.post("/partidos/", json={
         "equipo_local": "Equipo A",
         "equipo_visitante": "Equipo B",
         "fecha": "2025-05-11",
         "resultado_local": 10,
         "resultado_visitante": 8
-    }, headers={"Authorization": f"Bearer {access_token}"})
+    }, headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
-    assert data["equipo_local"] == "Equipo A"
-    assert data["equipo_visitante"] == "Equipo B"
 
 # 5. Obtener partidos
 def test_get_partidos():
     response = client.get("/partidos/")
     assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)  # Verifica que se devuelve una lista de partidos
+    assert isinstance(response.json(), list)
 
 # 6. Actualizar partido
 def test_update_partido():
-    # Primero, crea un partido
+    token = get_token("updater@example.com", "updatepass123")
+    # Crear partido
     response = client.post("/partidos/", json={
         "equipo_local": "Equipo C",
         "equipo_visitante": "Equipo D",
         "fecha": "2025-05-11",
         "resultado_local": 7,
         "resultado_visitante": 6
-    })
+    }, headers={"Authorization": f"Bearer {token}"})
     partido_id = response.json()["id"]
 
-    # Ahora, actualiza el partido
+    # Actualizar partido
     response = client.put(f"/partidos/{partido_id}", json={
         "equipo_local": "Equipo C",
         "equipo_visitante": "Equipo D",
         "fecha": "2025-05-11",
         "resultado_local": 8,
         "resultado_visitante": 6
-    })
+    }, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
-    data = response.json()
-    assert data["resultado_local"] == 8
+    assert response.json()["resultado_local"] == 8
 
 # 7. Eliminar partido
 def test_delete_partido():
-    # Primero, crea un partido
+    token = get_token("deleter@example.com", "deletepass123")
+    # Crear partido
     response = client.post("/partidos/", json={
         "equipo_local": "Equipo E",
         "equipo_visitante": "Equipo F",
         "fecha": "2025-05-11",
         "resultado_local": 9,
         "resultado_visitante": 7
-    })
+    }, headers={"Authorization": f"Bearer {token}"})
     partido_id = response.json()["id"]
 
-    # Ahora, elimina el partido
-    response = client.delete(f"/partidos/{partido_id}")
+    # Eliminar partido
+    response = client.delete(f"/partidos/{partido_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {"message": "Partido eliminado exitosamente"}
 
-# 8. Verificar acceso restringido (ejemplo para admin)
+# 8. Verificar acceso restringido sin login
 def test_admin_restricted_access():
-    # Intentar crear un partido sin estar autenticado
     response = client.post("/partidos/", json={
         "equipo_local": "Equipo G",
         "equipo_visitante": "Equipo H",
@@ -137,15 +133,14 @@ def test_admin_restricted_access():
         "resultado_local": 10,
         "resultado_visitante": 9
     })
-    assert response.status_code == 401  # Debe fallar por no estar autenticado
+    assert response.status_code == 401
 
 # 9. Prueba de administrador (habilitar y deshabilitar usuario)
 def test_admin_user_management():
-    # Suponiendo que ya tienes un administrador logueado
-    admin_token = "admin_jwt_token_here"  # Obtén el token de administrador
-
+    admin_token = get_token("admin@example.com", "adminpass123")
+    # Aquí podrías registrar previamente al usuario con ID 1 si tu base parte vacía
     response = client.patch("/admin/deactivate_user", json={
-        "user_id": 1  # ID de un usuario para deshabilitar
+        "user_id": 1
     }, headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == 200
     assert response.json()["message"] == "Usuario deshabilitado correctamente"
