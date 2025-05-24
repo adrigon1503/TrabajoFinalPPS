@@ -40,7 +40,9 @@ jobs:
             -subj "/CN=localhost"
 
       - name: Build and start services
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build \
+            -v ${{ github.workspace }}/nginx/nginx.ci.conf:/etc/nginx/nginx.conf
 
       - name: Show backend logs (diagnóstico inicial)
         run: docker compose logs backend
