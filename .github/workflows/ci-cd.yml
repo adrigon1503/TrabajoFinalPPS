@@ -46,20 +46,41 @@ jobs:
       - name: Show backend logs
         run: docker compose logs backend
 
+      # --------- BANDIT ---------
       - name: Run Bandit (security linter)
         run: |
           pip install bandit
-          bandit -r backend -ll
+          bandit -r backend -f html -o bandit_report.html
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: bandit_report.html
 
+      # --------- PIP-AUDIT ---------
       - name: Run pip-audit (dependency scan)
         run: |
           pip install pip-audit
-          pip-audit -r backend/requirements.txt
+          pip-audit -r backend/requirements.txt > pip_audit_report.txt
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v3
+        with:
+          name: pip-audit-report
+          path: pip_audit_report.txt
 
+      # --------- TESTS ---------
       - name: Run unit tests
         run: docker compose -f docker-compose.ci.yml run --rm backend pytest
 
+      # --------- TRIVY ---------
       - name: Scan backend image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: backend:ci
+          format: 'table'
+          output: 'trivy_report.txt'
+      - name: Upload Trivy Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: trivy_report.txt
