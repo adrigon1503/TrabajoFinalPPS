@@ -38,7 +38,7 @@ jobs:
             -keyout nginx/certs/selfsigned.key \
             -out nginx/certs/selfsigned.crt \
             -subj "/CN=localhost"
-            
+
       - name: Build and start services
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
 
@@ -72,10 +72,16 @@ jobs:
       - name: Check if Grafana is reachable
         run: curl --fail http://localhost:3000/api/health
 
+      - name: Verificar estado de Nginx
+        run: docker compose ps nginx
+
+      - name: Mostrar logs de Nginx
+        run: docker compose logs nginx
+
       - name: Check if Kibana is reachable via Nginx
         run: |
           for i in {1..10}; do
-            curl --insecure --fail https://localhost/kibana/api/status && break
+            docker compose exec -T nginx curl --insecure --fail https://localhost/kibana/api/status && break
             echo "Esperando que Kibana esté disponible vía Nginx..."
             sleep 5
           done
