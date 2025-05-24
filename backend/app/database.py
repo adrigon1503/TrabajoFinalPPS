@@ -13,7 +13,7 @@ DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("POSTGRES_DB")
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Reintento de conexión
 MAX_RETRIES = 10
