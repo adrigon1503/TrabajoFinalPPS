@@ -30,6 +30,7 @@ jobs:
           echo "DB_HOST=${DB_HOST}" >> .env
           echo "SECRET_KEY=${SECRET_KEY}" >> .env
           echo "LOG_LEVEL=${LOG_LEVEL}" >> .env
+          echo "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:5432/${POSTGRES_DB}" >> .env
 
       - name: Generar certificados SSL autofirmados
         run: |
